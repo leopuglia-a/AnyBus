@@ -31,9 +31,15 @@ export function fetchVehicleData(callback) {
     `${api.base}${apiCommands.vehicleLocations}&a=${api.agency}&t=0`
   );
   xhr.send();
-  // setInterval(() => {
-  //   send();
-  // }, 15000);
+
+  setInterval(() => {
+    xhr.addEventListener("load", xmlResponseCallback);
+    xhr.open(
+      "GET",
+      `${api.base}${apiCommands.vehicleLocations}&a=${api.agency}&t=0`
+    );
+    xhr.send();
+  }, 15000);
 }
 
 function xmlResponseCallback() {

@@ -49,6 +49,7 @@ function getNextColorForRoute() {
 }
 
 function drawBuses(buses) {
+  svg.selectAll("circles").remove();
   // {String: [Bus]}: Key represents the routeTag, and the value is a list of buses that belong to the route.
   let busesLocations = {};
   let routeColor = {};
@@ -60,13 +61,14 @@ function drawBuses(buses) {
     busesLocations[b.routeTag].push(b);
   });
 
+  const coordinates = [];
   for (const routeTag of Object.keys(busesLocations)) {
     let color = routeColor[routeTag];
-    const coordinates = [];
-
     busesLocations[routeTag].forEach((d) => {
-      coordinates.push([d.lon, d.lat]);
+      coordinates.push([d.lon, d.lat, color]);
     });
+
+    console.log("Coordinates:", coordinates.length);
 
     svg
       .selectAll("circle")
@@ -79,8 +81,11 @@ function drawBuses(buses) {
       .attr("cy", function (d) {
         return projection(d)[1];
       })
-      .attr("r", "2px")
-      .attr("fill", color);
+      .attr("r", "3px")
+      .attr("fill", function (d) {
+        console.log(d[2]);
+        return d[2];
+      });
   }
 }
 
