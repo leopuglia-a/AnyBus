@@ -33,8 +33,7 @@ const g = svg.append("g");
 const q = d3.queue();
 var sfo;
 var index = 0;
-var route_color = ["red", "yellow", "black", "green"];
-const MAX_COLORS = 4;
+const MAX_COLORS = 22;
 
 files.forEach(function (fileName) {
   q.defer(d3.json, fileName);
@@ -46,7 +45,7 @@ function getNextColorForRoute() {
   if (index == MAX_COLORS) {
     index = 0;
   }
-  return route_color[index++];
+  return routeColor[index++];
 }
 
 function drawBuses(buses) {
@@ -61,11 +60,7 @@ function drawBuses(buses) {
     busesLocations[b.routeTag].push(b);
   });
 
-  console.log("busesLocation type:", typeof busesLocations);
-  console.log("busesLocation data:", busesLocations);
-
-  for (const routeTag of busesLocations) {
-    console.log(routeTag, busesLocations[routeTag]);
+  for (const routeTag of Object.keys(busesLocations)) {
     let color = routeColor[routeTag];
     const coordinates = [];
 
@@ -73,7 +68,6 @@ function drawBuses(buses) {
       coordinates.push([d.lon, d.lat]);
     });
 
-    // console.log(busesLocations);
     svg
       .selectAll("circle")
       .data(coordinates)
