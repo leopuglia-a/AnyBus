@@ -1,18 +1,21 @@
 "use strict";
 
 import { Map } from "./Map.js";
-import { fetchVehicleData } from "./main.js";
-import { routeColor } from "./routeColor.js";
+import { fetchVehicleData } from "./dataHandler.js";
+import { getNextColorForRoute } from "./routeColor.js";
 
 const files = [
   "sfmaps/arteries.json",
   "sfmaps/freeways.json",
   "sfmaps/neighborhoods.json",
-  "sfmaps/streets.json",
+  "sfmaps/streets.json"
 ];
+
+// d3 configuration and initialization.
 
 const width = 960;
 const height = 900;
+var routeColor = {};
 
 const projection = d3
   .geoMercator()
@@ -29,72 +32,63 @@ const svg = d3
   .attr("height", height);
 
 const g = svg.append("g");
-
 const q = d3.queue();
-var sfo;
-var index = 0;
-const MAX_COLORS = 22;
 
-files.forEach(function (fileName) {
+// Get coordinates for map rendering
+files.forEach(function(fileName) {
   q.defer(d3.json, fileName);
 });
-
+// Map rendering
 q.awaitAll(makeMap);
 
-function getNextColorForRoute() {
-  if (index == MAX_COLORS) {
-    index = 0;
-  }
-  return routeColor[index++];
-}
-
+// Buses rendering, data from NextBus api
 function drawBuses(buses) {
-  svg.selectAll("circles").remove();
   // {String: [Bus]}: Key represents the routeTag, and the value is a list of buses that belong to the route.
   let busesLocations = {};
-  let routeColor = {};
-  buses.forEach((b) => {
-    if (!(b.routeTag in busesLocations)) {
-      busesLocations[b.routeTag] = [];
+
+  buses.forEach(b => {
+    if (!(b.routeTag in routeColor)) {
       routeColor[b.routeTag] = getNextColorForRoute();
     }
-    busesLocations[b.routeTag].push(b);
+    b.color = routeColor[b.routeTag];
   });
 
-  const coordinates = [];
-  for (const routeTag of Object.keys(busesLocations)) {
-    let color = routeColor[routeTag];
-    busesLocations[routeTag].forEach((d) => {
-      coordinates.push([d.lon, d.lat, color]);
+  // bind buses to circle in map
+  const circle = svg.selectAll("circle").data(buses, function(b) {
+    return b.busId;
+  });
+
+  // draw buses as point
+  circle
+    .enter()
+    .append("circle")
+    .attr("cx", function(b) {
+      return projection([b.lon, b.lat])[0];
+    })
+    .attr("cy", function(b) {
+      return projection([b.lon, b.lat])[1];
+    })
+    .attr("r", "3px")
+    .attr("fill", function(b) {
+      return b.color;
     });
 
-    console.log("Coordinates:", coordinates.length);
-
-    svg
-      .selectAll("circle")
-      .data(coordinates)
-      .enter()
-      .append("circle")
-      .attr("cx", function (d) {
-        return projection(d)[0];
-      })
-      .attr("cy", function (d) {
-        return projection(d)[1];
-      })
-      .attr("r", "3px")
-      .attr("fill", function (d) {
-        console.log(d[2]);
-        return d[2];
-      });
-  }
+  // update on map, TODO improvement on circle updates
+  circle
+    .exit()
+    .transition()
+    .attr("r", 0)
+    .remove();
 }
 
+// Map rendering
 function makeMap(error, data) {
   if (error) throw error;
 
   fetchVehicleData(drawBuses);
 
-  sfo = new Map(data[0], data[1], data[2], data[3]);
+  // array data[] contains datas from SF map
+  const sfo = new Map(data[0], data[1], data[2], data[3]);
 
   g.append("g")
     .selectAll("path")
@@ -128,10 +122,8 @@ function makeMap(error, data) {
     .attr("class", "freeways")
     .attr("d", geoGen);
 
-  // g.append("circle")
-  //   .attr("cx", 100)
-  //   .attr("cy", 100)
-  //   .attr("r", 3)
-  //   .attr("stroke", "black")
-  //   .attr("fill", "red");
+  // Update buses periodically
+  setInterval(() => {
+    fetchVehicleData(drawBuses);
+  }, 15000);
 }

@@ -31,11 +31,6 @@ button {
 
 .neighborhood {
   fill: #ccc;
-  /* stroke: #777; */
-  stroke-width: 1px;
-  stroke-dasharray: 1, 3;
-
-  stroke-linejoin: miter;
 }
 
 .freeways {
@@ -54,10 +49,4 @@ button {
   fill: #ccc;
   stroke: white;
   stroke-width: 1.5px;
-}
-
-.dot {
-  fill: steelblue;
-  stroke: black;
-  stroke-width: 1px;
 }

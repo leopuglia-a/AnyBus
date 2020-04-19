@@ -4,25 +4,27 @@ import { Bus } from "./Bus.js";
 
 const api = {
   agency: "sf-muni",
-  base: "http://webservices.nextbus.com/service/publicXMLFeed?command=",
+  base: "http://webservices.nextbus.com/service/publicXMLFeed?command="
 };
 
+// Commands accepted by API, for future use
 const apiCommands = {
   agencyList: "agencyList",
   routeConfig: "routeConfig",
   routeList: "routeList",
   vehicleLocations: "vehicleLocations",
-  singleVehicleLocation: "vehicleLocation",
+  singleVehicleLocation: "vehicleLocation"
 };
 
 const xhr = new XMLHttpRequest();
 const parser = new DOMParser();
 
 export var currentBuses = [];
-
+// Allow to specify a callback for fetchVe hicleData
 let busesRenderer = undefined;
 
 export function fetchVehicleData(callback) {
+  console.log("fetchVehicleData");
   if (!callback) throw "fetchVehicleCallback cannot be undefined";
   busesRenderer = callback;
   xhr.addEventListener("load", xmlResponseCallback);
@@ -31,15 +33,6 @@ export function fetchVehicleData(callback) {
     `${api.base}${apiCommands.vehicleLocations}&a=${api.agency}&t=0`
   );
   xhr.send();
-
-  setInterval(() => {
-    xhr.addEventListener("load", xmlResponseCallback);
-    xhr.open(
-      "GET",
-      `${api.base}${apiCommands.vehicleLocations}&a=${api.agency}&t=0`
-    );
-    xhr.send();
-  }, 15000);
 }
 
 function xmlResponseCallback() {
@@ -52,12 +45,14 @@ function xmlResponseCallback() {
 export function extractVehiclesFromXML(xmlStr) {
   const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
   const vehicles = xmlDoc.getElementsByTagName("vehicle");
+  console.log(vehicles);
   return vehicles;
 }
 
+// Clear vehicles before creating updated ones
 function updateVehicles(vehicles) {
   currentBuses.splice(0, currentBuses.length);
-  Array.from(vehicles).map((v) => {
+  Array.from(vehicles).map(v => {
     currentBuses.push(
       new Bus(
         v.getAttribute("id"),
@@ -73,30 +68,3 @@ function updateVehicles(vehicles) {
     );
   });
 }
-
-// function getVehicleLocation() {
-//   getResults(apiCommands.vehicleLocation, api.agency, 1);
-// }
-
-// function getResults(
-//   command,
-//   agency,
-//   vehicleId = undefined,
-//   time = "0",
-//   routeId = undefined
-// ) {
-//   xhr.open(
-//     "GET",
-//     `${api.base}${command}&a=${agency}&r=${routeId}&t=${time}&=v${vehicleId}`
-//   );
-//   xhr.send();
-// }
-
-// function getRoutes() {
-//   getResults(apiCommands.routeList, api.agency);
-// }
-
-// function getRouteInfo() {
-//   getResults(apiCommands.routeConfig, api.agency, 1);
-//   getVehicles();
-// }
